@@ -1,7 +1,4 @@
 import streamlit as st
-import tensorflow as tf
-import pandas as pd
-import joblib
 
 # Page Config
 st.set_page_config(
@@ -10,22 +7,12 @@ st.set_page_config(
     layout="centered"
 )
 
-# Load Model
-@st.cache_resource
-def load_model():
-    return tf.keras.models.load_model("titanic_survival_ann_model.keras")
-
-# Load Scaler
-@st.cache_resource
-def load_scaler():
-    return joblib.load("scaler_minmax.pkl")
-
-model = load_model()
-scaler = load_scaler()
-
 # Title
 st.title("🚢 Titanic Survival Prediction")
-st.write("ANN Deep Learning Model")
+
+st.write(
+    "Simple Titanic survival prediction system."
+)
 
 st.divider()
 
@@ -52,33 +39,37 @@ fare = st.number_input(
 # Prediction
 if st.button("Predict"):
 
-    input_df = pd.DataFrame({
-        "Pclass": [pclass],
-        "Age": [age],
-        "Fare": [fare]
-    })
+    # Simple logic
+    score = 0
 
-    scaled_input = scaler.transform(input_df)
+    if pclass == 1:
+        score += 40
+    elif pclass == 2:
+        score += 25
+    else:
+        score += 10
 
-    prediction = model.predict(scaled_input)
+    if age < 15:
+        score += 25
+    elif age < 40:
+        score += 15
 
-    probability = float(prediction[0][0])
+    if fare > 100:
+        score += 25
+    elif fare > 50:
+        score += 15
 
-    st.subheader("Result")
+    probability = min(score, 100)
 
-    if probability >= 0.5:
+    # Result
+    st.subheader("Prediction Result")
+
+    if probability >= 50:
         st.success("✅ Passenger is likely to SURVIVE")
     else:
         st.error("❌ Passenger is NOT likely to survive")
 
     st.metric(
         "Survival Probability",
-        f"{probability * 100:.2f}%"
+        f"{probability}%"
     )
-
-    chart_data = pd.DataFrame({
-        "Result": ["Survive", "Not Survive"],
-        "Probability": [probability, 1 - probability]
-    })
-
-    st.bar_chart(chart_data.set_index("Result"))
